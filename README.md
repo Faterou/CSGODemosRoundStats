@@ -1,5 +1,5 @@
 # CSGODemosRoundStats
-This project is using DemoInfo to build a database of CSGO rounds. This database is aiming to be used in a classifier with two classes {Win, Lose}.
+This project is using DemoInfo to build a database of CSGO rounds from demos. This database is aiming to be used in a classifier with two classes {Win, Lose}.
 
 ## Stats recorded
 
