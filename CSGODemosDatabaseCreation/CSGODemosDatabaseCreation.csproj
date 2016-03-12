@@ -51,6 +51,7 @@
     <Compile Include="ParseDemos.cs" />
     <Compile Include="ProfessionalTeam.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoundPrinter.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
