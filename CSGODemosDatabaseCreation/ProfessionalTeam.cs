@@ -12,9 +12,9 @@ namespace CSGODemosDatabaseCreation
         private string m_name;
         private Team m_side;
 
-        public ProfessionalTeam(string name, Team side)
+        public ProfessionalTeam(string name, Team side, DateTime date)
         {
-            this.SetName(name);
+            this.SetName(MatchTeamNameWithDate(name, date));
             m_side = side;
         }
 
@@ -40,9 +40,10 @@ namespace CSGODemosDatabaseCreation
             }
         }
 
-        private string MatchTeamNameWithDate(string name)
+        private string MatchTeamNameWithDate(string name, DateTime date)
         {
-            return "";
+            //TODO: Check the date of the event and match the name of the team from that
+            return name;
         }
     }
 }

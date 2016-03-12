@@ -9,6 +9,7 @@ None
 
 - Team's name
 - Enemy team's name
+- Map
 - Team's side
 - Team's equipment value
 - Enemy team's equipment value
