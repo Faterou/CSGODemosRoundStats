@@ -11,14 +11,27 @@ namespace CSGODemosDatabaseCreation
 {
     public class ParseDemo
     {
+        //The demo parser
         private DemoParser m_parser;
 
+        //Boolean that is true if the match is started and false if not
         private bool m_hasMatchStarted;
+
+        //Name of the map played
         private string m_map;
+
+        //First team
         private ProfessionalTeam m_team;
+
+        //Second team
         private ProfessionalTeam m_enemyTeam;
+
+        //Date of the tournament
         private DateTime m_date;
 
+        /// <summary>
+        /// Constructor for a demo parser
+        /// </summary>
         public ParseDemo()
         {
             m_parser = null;
@@ -29,6 +42,13 @@ namespace CSGODemosDatabaseCreation
             m_map = "";
         }
 
+
+        /// <summary>
+        /// Parses a demo
+        /// </summary>
+        /// <param name="outputDatabaseFilename">Filename of the output file</param>
+        /// <param name="demoFilename">Filename of the demo file</param>
+        /// <returns>Returns true if the demo was parsed correctly.</returns>
         public bool ParseADemo(string outputDatabaseFilename, string demoFilename)
         {
             m_date = GetDateOfEvent(demoFilename);
@@ -51,6 +71,11 @@ namespace CSGODemosDatabaseCreation
             return true;
         }
 
+        /// <summary>
+        /// Function that catches a MatchStartedEvent
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">Args</param>
         private void CatchMatchStarted(object sender, MatchStartedEventArgs e)
         {
             m_hasMatchStarted = true;
@@ -58,33 +83,61 @@ namespace CSGODemosDatabaseCreation
             m_enemyTeam = new ProfessionalTeam(((DemoParser)sender).TClanName, Team.Terrorist, m_date);
         }
 
-        //This is where we calculate the equipment value of each teams
+        /// <summary>
+        /// Function that catches a FreezetimeEndedEvent
+        /// This is where we calculate the equipment value of each teams
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">Args</param>
         private void CatchFreezetimeEnded(object sender, FreezetimeEndedEventArgs e)
         {
             return;
         }
 
+        /// <summary>
+        /// Function that catches a RoundStartedEvent
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">Args</param>
         private void CatchRoundStart(object sender, RoundStartedEventArgs e)
         {
             return;
         }
 
+        /// <summary>
+        /// Function that catches a RoundEndedEvent
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">Args</param>
         private void CatchRoundEnd(object sender, RoundEndedEventArgs e)
         {
             return;
         }
 
-        // Catches players killed even during warmup and knife rounds
+        /// <summary>
+        /// Function that triggers when a player is killed.
+        /// Catches players killed even during warmup and knife rounds
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">Args</param>
         private void CatchPlayerKilled(object sender, PlayerKilledEventArgs e)
         {
             return;
         }
 
+        /// <summary>
+        /// Resets the parser
+        /// </summary>
         private void resetParser()
         {
 
         }
 
+        /// <summary>
+        /// Gets the date of the event with the filename (the events are hard coded, make sure all your filenames countain the name of the events).
+        /// </summary>
+        /// <param name="filename">Filename of the demo</param>
+        /// <returns>Returns the date of the event</returns>
         private DateTime GetDateOfEvent(string filename)
         {
             if(Regex.Match(filename,"IEMKatowice2016").Success)
@@ -130,6 +183,10 @@ namespace CSGODemosDatabaseCreation
             else if (Regex.Match(filename, "DHCluj2015").Success)
             {
                 return new DateTime(2015, 10, 28);
+            }
+            else if (Regex.Match(filename, "DHCluj2015LANQualifier").Success)
+            {
+                return new DateTime(2015, 9, 22);
             }
             return new DateTime();
         }
