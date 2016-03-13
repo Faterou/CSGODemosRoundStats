@@ -29,6 +29,12 @@ namespace CSGODemosDatabaseCreation
         //Date of the tournament
         private DateTime m_date;
 
+        //The current round stats
+        private Round m_currentRound;
+
+        //Writer
+        private RoundPrinter m_printer;
+
         /// <summary>
         /// Constructor for a demo parser
         /// </summary>
@@ -40,6 +46,7 @@ namespace CSGODemosDatabaseCreation
             m_team = null;
             m_enemyTeam = null;
             m_map = "";
+            m_printer = null;
         }
 
 

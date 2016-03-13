@@ -15,18 +15,28 @@ namespace CSGODemosDatabaseCreation
         //Array containing the name of all the attributes
         private string[] m_attributes;
 
-        //Writer
-        private TextWriter m_writer;
+        //Filename of the output database
+        private string m_outputDatabaseFilename;
 
         /// <summary>
         /// Constructor for a RoundPrinter
+        /// Writes the first line in the file consisting of the name of all the attributes separated by \t
         /// </summary>
         /// <param name="attributes">String array that contains the name of all the attributes in order.</param>
         /// <param name="outputDatabseFilename">Filename of the output file where we want to print the rounds.</param>
         public RoundPrinter(string[] attributes, string outputDatabaseFilename)
         {
             m_attributes = attributes;
-            m_writer = new StreamWriter(outputDatabaseFilename, false, Encoding.UTF8);
+            m_outputDatabaseFilename = outputDatabaseFilename;
+
+            using (StreamWriter writer = new StreamWriter(outputDatabaseFilename, false, Encoding.UTF8))
+            {
+                for (int i = 0; i < m_attributes.Length; i++)
+                {
+                    writer.Write(m_attributes[i] + "\t");
+                }
+                writer.WriteLine();
+            }
         }
 
         /// <summary>
@@ -38,12 +48,14 @@ namespace CSGODemosDatabaseCreation
         {
             if(round.Length == m_attributes.Length)
             {
-                for(int i = 0; i < round.Length; i++)
+                using(StreamWriter writer = new StreamWriter(m_outputDatabaseFilename, true, Encoding.UTF8))
                 {
-                    m_writer.Write(round[i] + " ");
+                    for (int i = 0; i < round.Length; i++)
+                    {
+                        writer.Write(round[i] + "\t");
+                    }
+                    writer.WriteLine();
                 }
-                m_writer.WriteLine();
-
                 return true;
             }
             return false;

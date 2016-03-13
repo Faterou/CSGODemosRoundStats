@@ -37,7 +37,7 @@ None
 - Enemy team's number of molotov used
 - Team's number of HE Grenades used
 - Enemy team's number of HE Grenades used
-- Number of kills done by Team before Enemy team got one (Negative value if the other team for the first kills)
+- Entry kill?
 - All 5 members of a team got killed
 - Bomb exploded
 - Bomb was defused
