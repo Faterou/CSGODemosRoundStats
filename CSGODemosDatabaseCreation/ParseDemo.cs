@@ -47,6 +47,7 @@ namespace CSGODemosDatabaseCreation
             m_enemyTeam = null;
             m_map = "";
             m_printer = null;
+            m_currentRound = new Round();
         }
 
 
@@ -88,6 +89,10 @@ namespace CSGODemosDatabaseCreation
             m_hasMatchStarted = true;
             m_team = new ProfessionalTeam(((DemoParser)sender).CTClanName, Team.CounterTerrorist, m_date);
             m_enemyTeam = new ProfessionalTeam(((DemoParser)sender).TClanName, Team.Terrorist, m_date);
+
+            m_currentRound.SetValue("Team name", m_team.GetName());
+            m_currentRound.SetValue("Enemy team name", m_team.GetName());
+            m_currentRound.SetValue("Team side", "CT");
         }
 
         /// <summary>
@@ -98,7 +103,27 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">Args</param>
         private void CatchFreezetimeEnded(object sender, FreezetimeEndedEventArgs e)
         {
-            return;
+            int teamEquipmentValue = 0;
+            int enemyTeamEquipmentValue = 0;
+
+            //Let's record the equipment value of each team
+            if(m_hasMatchStarted)
+            {
+                foreach (Player p in ((DemoParser)sender).PlayingParticipants)
+                {
+                    if(p.Team == m_team.m_side)
+                    {
+                        teamEquipmentValue += p.CurrentEquipmentValue;
+                    }
+                    else
+                    {
+                        enemyTeamEquipmentValue += p.CurrentEquipmentValue;
+                    }
+                }
+
+                m_currentRound.SetValue("Team equipment value", teamEquipmentValue.ToString());
+                m_currentRound.SetValue("Enemy team equipment value", enemyTeamEquipmentValue.ToString());
+            }
         }
 
         /// <summary>
@@ -194,6 +219,14 @@ namespace CSGODemosDatabaseCreation
             else if (Regex.Match(filename, "DHCluj2015LANQualifier").Success)
             {
                 return new DateTime(2015, 9, 22);
+            }
+            else if (Regex.Match(filename, "ESLESEADubai").Success)
+            {
+                return new DateTime(2015, 9, 10);
+            }
+            else if (Regex.Match(filename, "ESLOneCologne2015").Success)
+            {
+                return new DateTime(2015, 8, 20);
             }
             return new DateTime();
         }

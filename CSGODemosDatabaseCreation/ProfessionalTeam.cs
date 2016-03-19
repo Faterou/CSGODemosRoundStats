@@ -16,7 +16,7 @@ namespace CSGODemosDatabaseCreation
         private string m_name;
 
         //Side the team is on at the moment
-        private Team m_side;
+        public Team m_side { get; set; }
 
         /// <summary>
         /// Constructor for a team

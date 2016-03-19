@@ -3,16 +3,15 @@ This project is using DemoInfo to build a database of CSGO rounds from demos. Th
 
 ## Stats recorded
 
-None
-
-## Stats to be recorded
-
 - Team's name
 - Enemy team's name
 - Map
 - Team's side
 - Team's equipment value
 - Enemy team's equipment value
+
+## Stats to be recorded
+
 - Team's number of rifles (Excluding AWP)
 - Enemy team's number of rifles (Excluding AWP)
 - Team's number of AWPs

@@ -123,6 +123,11 @@ namespace CSGODemosDatabaseCreation
             return values;
         }
 
+        public void SetValue(string attributeString, string value)
+        {
+            m_attributes[attributeString].m_value = value;
+        }
+
         /// <summary>
         /// Clear the values of each attribute
         /// </summary>
