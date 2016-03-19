@@ -15,7 +15,7 @@ namespace CSGODemosDatabaseCreation
 
         //List of possible attributes
         string[] m_listOfAttributeNames = { "Team name", "Enemy team name", "Map", "Team side", "Team equipment value", "Enemy team equipment value",
-                "Team number of rifles", "Enemy team number of rifles", "Team number of AWPs", "Enemy team number of AWPs", "Team number of shotguns",
+                "Team number of rifles", "Enemy team number of rifles", "Team number of AWPs", "Enemy team number of AWPs", "Team number of shotguns", "Enemy team number of shotguns", 
                 "Team number of SMGs", "Enemy team number of SMGs", "Team number of machine guns", "Enemy team number of machine guns",
                 "Team number of upgraded pistols", "Enemy team number of upgraded pistols", "Team number of kevlar", "Enemy team number of kevlar",
                 "Team number of helmets", "Enemy team number of helmets", "Team number of smoke grenades used", "Enemy team number of smoke grenades used",
@@ -123,6 +123,11 @@ namespace CSGODemosDatabaseCreation
             return values;
         }
 
+        /// <summary>
+        /// Sets the value of attributeString
+        /// </summary>
+        /// <param name="attributeString">Attribute's name to set the value of</param>
+        /// <param name="value">Value to set</param>
         public void SetValue(string attributeString, string value)
         {
             m_attributes[attributeString].m_value = value;

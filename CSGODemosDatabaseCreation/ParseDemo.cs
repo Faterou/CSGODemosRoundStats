@@ -32,6 +32,9 @@ namespace CSGODemosDatabaseCreation
         //The current round stats
         private Round m_currentRound;
 
+        //True if the sides have to be switched, false otherwise
+        private bool m_sideSwitch;
+
         //Writer
         private RoundPrinter m_printer;
 
@@ -48,6 +51,7 @@ namespace CSGODemosDatabaseCreation
             m_map = "";
             m_printer = null;
             m_currentRound = new Round();
+            m_sideSwitch = false;
         }
 
 
@@ -73,6 +77,7 @@ namespace CSGODemosDatabaseCreation
             m_parser.RoundStart += CatchRoundStart;
             m_parser.RoundEnd += CatchRoundEnd;
             m_parser.PlayerKilled += CatchPlayerKilled;
+            m_parser.LastRoundHalf += CatchLastRoundHalf;
 
             m_parser.ParseToEnd();
 
@@ -89,10 +94,6 @@ namespace CSGODemosDatabaseCreation
             m_hasMatchStarted = true;
             m_team = new ProfessionalTeam(((DemoParser)sender).CTClanName, Team.CounterTerrorist, m_date);
             m_enemyTeam = new ProfessionalTeam(((DemoParser)sender).TClanName, Team.Terrorist, m_date);
-
-            m_currentRound.SetValue("Team name", m_team.GetName());
-            m_currentRound.SetValue("Enemy team name", m_team.GetName());
-            m_currentRound.SetValue("Team side", "CT");
         }
 
         /// <summary>
@@ -106,23 +107,145 @@ namespace CSGODemosDatabaseCreation
             int teamEquipmentValue = 0;
             int enemyTeamEquipmentValue = 0;
 
-            //Let's record the equipment value of each team
-            if(m_hasMatchStarted)
+            int teamNumberOfRifles = 0;
+            int enemyTeamNumberOfRifles = 0;
+
+            int teamNumberOfAWPs = 0;
+            int enemyTeamNumberOfAWPs = 0;
+
+            int teamNumberOfShotguns = 0;
+            int enemyTeamNumberOfShotguns = 0;
+
+            int teamNumberOfMachineGuns = 0;
+            int enemyTeamNumberOfMachineGuns = 0;
+
+            int teamNumberOfSMGs = 0;
+            int enemyTeamNumberOfSMGs = 0;
+
+            int teamNumberOfUpgradedPistols = 0;
+            int enemyTeamNumberOfUpgradedPistols = 0;
+
+            int teamNumberOfKevlar = 0;
+            int enemyTeamNumberOfKevlar = 0;
+
+            int teamNumberOfHelmets = 0;
+            int enemyTeamNumberOfHelmets = 0;
+
+            if (m_hasMatchStarted)
             {
+                
                 foreach (Player p in ((DemoParser)sender).PlayingParticipants)
                 {
-                    if(p.Team == m_team.m_side)
+                    if (p.Team == m_team.m_side)
                     {
+                        //Let's record the equipment value
                         teamEquipmentValue += p.CurrentEquipmentValue;
+
+                        //Let's record the weapons
+                        foreach(Equipment equipment in p.Weapons)
+                        {
+                            if (equipment.Class == EquipmentClass.Rifle && equipment.Weapon != EquipmentElement.AWP)
+                            {
+                                teamNumberOfRifles++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Rifle && equipment.Weapon == EquipmentElement.AWP)
+                            {
+                                teamNumberOfAWPs++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Heavy && equipment.Weapon != EquipmentElement.M249 && equipment.Weapon != EquipmentElement.Negev)
+                            {
+                                teamNumberOfShotguns++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Heavy && (equipment.Weapon == EquipmentElement.M249 || equipment.Weapon == EquipmentElement.Negev))
+                            {
+                                teamNumberOfMachineGuns++;
+                            }
+                            else if (equipment.Class == EquipmentClass.SMG)
+                            {
+                                teamNumberOfSMGs++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Pistol && equipment.Weapon != EquipmentElement.USP && equipment.Weapon != EquipmentElement.Glock && equipment.Weapon != EquipmentElement.P2000)
+                            {
+                                teamNumberOfUpgradedPistols++;
+                            }
+                        }
+
+                        //Let's record the armor
+                        if(p.Armor > 0)
+                        {
+                            teamNumberOfKevlar++;
+                        }
+                        else if(p.HasHelmet)
+                        {
+                            teamNumberOfHelmets++;
+                        }
                     }
                     else
                     {
                         enemyTeamEquipmentValue += p.CurrentEquipmentValue;
+
+                        foreach (Equipment equipment in p.Weapons)
+                        {
+                            if (equipment.Class == EquipmentClass.Rifle && equipment.Weapon != EquipmentElement.AWP)
+                            {
+                                enemyTeamNumberOfRifles++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Rifle && equipment.Weapon == EquipmentElement.AWP)
+                            {
+                                enemyTeamNumberOfAWPs++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Heavy && equipment.Weapon != EquipmentElement.M249 && equipment.Weapon != EquipmentElement.Negev)
+                            {
+                                enemyTeamNumberOfShotguns++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Heavy && (equipment.Weapon == EquipmentElement.M249 || equipment.Weapon == EquipmentElement.Negev))
+                            {
+                                enemyTeamNumberOfMachineGuns++;
+                            }
+                            else if (equipment.Class == EquipmentClass.SMG)
+                            {
+                                enemyTeamNumberOfSMGs++;
+                            }
+                            else if (equipment.Class == EquipmentClass.Pistol && equipment.Weapon != EquipmentElement.USP && equipment.Weapon != EquipmentElement.Glock && equipment.Weapon != EquipmentElement.P2000)
+                            {
+                                enemyTeamNumberOfUpgradedPistols++;
+                            }
+                        }
+
+                        if (p.Armor > 0)
+                        {
+                            enemyTeamNumberOfKevlar++;
+                        }
+                        else if (p.HasHelmet)
+                        {
+                            enemyTeamNumberOfHelmets++;
+                        }
                     }
                 }
 
+                m_currentRound.SetValue("Team name", m_team.GetName());
+                m_currentRound.SetValue("Enemy team name", m_enemyTeam.GetName());
+                m_currentRound.SetValue("Team side", m_team.m_side.ToString());
+                m_currentRound.SetValue("Map", m_map);
+
                 m_currentRound.SetValue("Team equipment value", teamEquipmentValue.ToString());
                 m_currentRound.SetValue("Enemy team equipment value", enemyTeamEquipmentValue.ToString());
+                m_currentRound.SetValue("Team number of rifles", teamNumberOfRifles.ToString());
+                m_currentRound.SetValue("Enemy team number of rifles", enemyTeamNumberOfRifles.ToString());
+                m_currentRound.SetValue("Team number of AWPs", teamNumberOfAWPs.ToString());
+                m_currentRound.SetValue("Enemy team number of AWPs", enemyTeamNumberOfAWPs.ToString());
+                m_currentRound.SetValue("Team number of shotguns", teamNumberOfShotguns.ToString());
+                m_currentRound.SetValue("Enemy team number of shotguns", enemyTeamNumberOfShotguns.ToString());
+                m_currentRound.SetValue("Team number of SMGs", teamNumberOfSMGs.ToString());
+                m_currentRound.SetValue("Enemy team number of SMGs", enemyTeamNumberOfSMGs.ToString());
+                m_currentRound.SetValue("Team number of machine guns", teamNumberOfMachineGuns.ToString());
+                m_currentRound.SetValue("Enemy team number of machine guns", enemyTeamNumberOfMachineGuns.ToString());
+                m_currentRound.SetValue("Team number of upgraded pistols", teamNumberOfUpgradedPistols.ToString());
+                m_currentRound.SetValue("Enemy team number of upgraded pistols", enemyTeamNumberOfUpgradedPistols.ToString());
+                m_currentRound.SetValue("Team number of kevlar", teamNumberOfKevlar.ToString());
+                m_currentRound.SetValue("Enemy team number of kevlar", enemyTeamNumberOfKevlar.ToString());
+                m_currentRound.SetValue("Team number of helmets", teamNumberOfHelmets.ToString());
+                m_currentRound.SetValue("Enemy team number of helmets", enemyTeamNumberOfHelmets.ToString());
             }
         }
 
@@ -133,7 +256,12 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">Args</param>
         private void CatchRoundStart(object sender, RoundStartedEventArgs e)
         {
-            return;
+            if(m_sideSwitch)
+            {
+                m_team.SwitchSide();
+                m_enemyTeam.SwitchSide();
+                m_sideSwitch = false;
+            }
         }
 
         /// <summary>
@@ -155,6 +283,11 @@ namespace CSGODemosDatabaseCreation
         private void CatchPlayerKilled(object sender, PlayerKilledEventArgs e)
         {
             return;
+        }
+
+        private void CatchLastRoundHalf(object sender, LastRoundHalfEventArgs e)
+        {
+            m_sideSwitch = true;
         }
 
         /// <summary>
