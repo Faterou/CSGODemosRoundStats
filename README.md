@@ -9,9 +9,6 @@ This project is using DemoInfo to build a database of CSGO rounds from demos. Th
 - Team's side
 - Team's equipment value
 - Enemy team's equipment value
-
-## Stats to be recorded
-
 - Team's number of rifles (Excluding AWP)
 - Enemy team's number of rifles (Excluding AWP)
 - Team's number of AWPs
@@ -28,6 +25,9 @@ This project is using DemoInfo to build a database of CSGO rounds from demos. Th
 - Enemy team's number of kevlar
 - Team's number of helmets
 - Enemy team's number of helmets
+
+## Stats to be recorded
+
 - Team's number of smoke grenades used
 - Enemy team's number of smoke grenades used
 - Team's number of flashes used
