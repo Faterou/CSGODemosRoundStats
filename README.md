@@ -1,5 +1,5 @@
 # CSGODemosRoundStats
-This project is using DemoInfo to build a database of CSGO rounds from demos. This database is aiming to be used in a classifier with two classes {Win, Lose}.
+This project is using [DemoInfo](https://github.com/EHVAG/demoinfo) to build a database of CSGO rounds from demos. This database is aiming to be used in a classifier with two classes {Win, Lose}.
 
 ## Stats recorded
 
@@ -25,9 +25,6 @@ This project is using DemoInfo to build a database of CSGO rounds from demos. Th
 - Enemy team's number of kevlar
 - Team's number of helmets
 - Enemy team's number of helmets
-
-## Stats to be recorded
-
 - Team's number of smoke grenades used
 - Enemy team's number of smoke grenades used
 - Team's number of flashes used
@@ -36,6 +33,10 @@ This project is using DemoInfo to build a database of CSGO rounds from demos. Th
 - Enemy team's number of molotov used
 - Team's number of HE Grenades used
 - Enemy team's number of HE Grenades used
+
+## Stats to be recorded
+
+
 - Entry kill?
 - All 5 members of a team got killed
 - Bomb exploded

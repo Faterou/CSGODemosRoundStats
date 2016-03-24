@@ -38,6 +38,9 @@ namespace CSGODemosDatabaseCreation
         //Association of a player with his total cash spent at the beginning of the round (used to get the guns bought after free time end)
         private Dictionary<Player, int> m_totalCashSpent;
 
+        //Association of a player and if he has a molotov at the moment (used to get the number of molotov used)
+        private Dictionary<Player, bool> m_hasMolotov;
+
         //True when the round is rolling (after freezetime)
         private bool m_roundRolling;
 
@@ -60,6 +63,7 @@ namespace CSGODemosDatabaseCreation
             m_sideSwitch = false;
             m_totalCashSpent = new Dictionary<Player, int>();
             m_roundRolling = false;
+            m_hasMolotov = new Dictionary<Player, bool>();
         }
 
 
@@ -85,6 +89,9 @@ namespace CSGODemosDatabaseCreation
             m_parser.RoundStart += CatchRoundStart;
             m_parser.RoundEnd += CatchRoundEnd;
             m_parser.PlayerKilled += CatchPlayerKilled;
+            m_parser.SmokeNadeStarted += CatchSmokeNadeStarted;
+            m_parser.FlashNadeExploded += CatchFlashNadeExploded;
+            m_parser.ExplosiveNadeExploded += CatchExplosiveNadeExploded;
             m_parser.LastRoundHalf += CatchLastRoundHalf;
             m_parser.RoundEnd += CatchRoundEnd;
             m_parser.TickDone += CatchTickDone;
@@ -119,6 +126,7 @@ namespace CSGODemosDatabaseCreation
             foreach(Player p in ((DemoParser)sender).PlayingParticipants)
             {
                 m_totalCashSpent.Add(p, 0);
+                m_hasMolotov.Add(p, false);
             }
         }
 
@@ -146,7 +154,7 @@ namespace CSGODemosDatabaseCreation
         {
             if(m_hasMatchStarted)
             {
-                if(m_printer.PrintRound(m_currentRound.GetValues()))
+                if(m_printer.PrintRound(m_currentRound.GetValues()) && m_printer.PrintRound(m_currentRound.ReverseRound().GetValues()))
                 {
                     m_currentRound.ClearValues();
                 }
@@ -172,6 +180,9 @@ namespace CSGODemosDatabaseCreation
         private void CatchRoundEnd(object sender, RoundEndedEventArgs e)
         {
             m_roundRolling = false;
+            foreach(Player p in m_hasMolotov.Keys.ToList()) {
+                m_hasMolotov[p] = false;
+            }
         }
 
         /// <summary>
@@ -183,6 +194,133 @@ namespace CSGODemosDatabaseCreation
         private void CatchPlayerKilled(object sender, PlayerKilledEventArgs e)
         {
             return;
+        }
+
+        /// <summary>
+        /// Function that triggers when a smoke is thrown
+        /// It adds 1 to the attribute number of smoke grenades used
+        /// </summary>
+        /// <param name="sender">the parser</param>
+        /// <param name="e">args</param>
+        private void CatchSmokeNadeStarted(object sender, SmokeEventArgs e)
+        {
+            if(e.ThrownBy.Team == m_team.m_side)
+            {
+                try
+                {
+                    m_currentRound.SetValue("Team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Team number of smoke grenades used")) + 1).ToString());
+                }
+                catch(FormatException)
+                {
+                    m_currentRound.SetValue("Team number of smoke grenades used", "0");
+                }
+            }
+            else
+            {
+                try
+                {
+                    m_currentRound.SetValue("Enemy team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of smoke grenades used")) + 1).ToString());
+                }
+                catch(FormatException)
+                {
+                    m_currentRound.SetValue("Enemy team number of smoke grenades used", "0");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Triggers when a flash explodes
+        /// It adds 1 to the attribute number of flashes used
+        /// </summary>
+        /// <param name="sender">the parser</param>
+        /// <param name="e">args</param>
+        private void CatchFlashNadeExploded(object sender, FlashEventArgs e)
+        {
+            if (e.ThrownBy.Team == m_team.m_side)
+            {
+                try
+                {
+                    m_currentRound.SetValue("Team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Team number of flashes used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Team number of flashes used", "0");
+                }
+            }
+            else
+            {
+                try
+                {
+                    m_currentRound.SetValue("Enemy team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of flashes used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Enemy team number of flashes used", "0");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Triggers when an HE explodes
+        /// It adds 1 to the attribute number of HE used
+        /// </summary>
+        /// <param name="sender">the parser</param>
+        /// <param name="e">args</param>
+        private void CatchExplosiveNadeExploded(object sender, GrenadeEventArgs e)
+        {
+            if (e.ThrownBy.Team == m_team.m_side)
+            {
+                try
+                {
+                    m_currentRound.SetValue("Team number of HE used", (Int32.Parse(m_currentRound.GetValue("Team number of HE used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Team number of HE used", "0");
+                }
+            }
+            else
+            {
+                try
+                {
+                    m_currentRound.SetValue("Enemy team number of HE used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of HE used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Enemy team number of HE used", "0");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Triggers when a molotov is started
+        /// It adds 1 to the attribute number of HE used
+        /// </summary>
+        /// <param name="p">the player who threw the molotov</param>
+        private void CatchFireNadeStarted(Player p)
+        {
+            if (p.Team == m_team.m_side)
+            {
+                try
+                {
+                    m_currentRound.SetValue("Team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Team number of molotov used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Team number of molotov used", "0");
+                }
+            }
+            else
+            {
+                try
+                {
+                    m_currentRound.SetValue("Enemy team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of molotov used")) + 1).ToString());
+                }
+                catch (FormatException)
+                {
+                    m_currentRound.SetValue("Enemy team number of molotov used", "0");
+                }
+            }
         }
 
         /// <summary>
@@ -204,7 +342,19 @@ namespace CSGODemosDatabaseCreation
                     if(p.AdditionaInformations.TotalCashSpent > m_totalCashSpent[p])
                     {
                         RecordEquipment();
-                        return;
+                    }
+
+                    if((p.Weapons.Where(weapon => weapon.Weapon == EquipmentElement.Molotov || weapon.Weapon == EquipmentElement.Incendiary)).Count() > 0)
+                    {
+                        m_hasMolotov[p] = true;
+                    }
+                    else if(m_hasMolotov[p])
+                    {
+                        if(p.IsAlive)
+                        {
+                            CatchFireNadeStarted(p);
+                        }
+                        m_hasMolotov[p] = false;
                     }
                 }
             }
@@ -217,6 +367,9 @@ namespace CSGODemosDatabaseCreation
         {
 
         }
+
+        
+
 
         /// <summary>
         /// Records the equipment values and the weapons bought

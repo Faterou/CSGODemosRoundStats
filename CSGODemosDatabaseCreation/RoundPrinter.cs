@@ -33,7 +33,7 @@ namespace CSGODemosDatabaseCreation
             {
                 for (int i = 0; i < m_attributes.Length; i++)
                 {
-                    writer.Write(m_attributes[i] + "\t");
+                    writer.Write(m_attributes[i] + ",");
                 }
                 writer.WriteLine();
             }
@@ -52,7 +52,7 @@ namespace CSGODemosDatabaseCreation
                 {
                     for (int i = 0; i < round.Length; i++)
                     {
-                        writer.Write(round[i] + "\t");
+                        writer.Write(round[i] + ",");
                     }
                     writer.WriteLine();
                 }
