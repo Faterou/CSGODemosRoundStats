@@ -20,8 +20,7 @@ namespace CSGODemosDatabaseCreation
                 "Team number of upgraded pistols", "Enemy team number of upgraded pistols", "Team number of kevlar", "Enemy team number of kevlar",
                 "Team number of helmets", "Enemy team number of helmets", "Team number of smoke grenades used", "Enemy team number of smoke grenades used",
                 "Team number of flashes used", "Enemy team number of flashes used", "Team number of molotov used", "Enemy team number of molotov used",
-                "Team number of HE used", "Enemy team number of HE used", "Team entry kill", "Round end by death", "Bomb exploded", "Bomb defused",
-                "Time ran out", "Class" };
+                "Team number of HE used", "Enemy team number of HE used", "Team entry kill", "Win condition",  "Class" };
 
         /// <summary>
         /// Constructor that enables all of the m_listOfAttributeNames
@@ -313,21 +312,9 @@ namespace CSGODemosDatabaseCreation
                             newRound.SetValue(att, "Yes");
                         }
                     }
-                    else if (att == "Round end by death")
+                    else if (att == "Win condition")
                     {
-                        newRound.SetValue(att, this.GetValue("Round end by death"));
-                    }
-                    else if (att == "Bomb exploded")
-                    {
-                        newRound.SetValue(att, this.GetValue("Bomb exploded"));
-                    }
-                    else if (att == "Bomb defuses")
-                    {
-                        newRound.SetValue(att, this.GetValue("Bomb defused"));
-                    }
-                    else if (att == "Time ran out")
-                    {
-                        newRound.SetValue(att, this.GetValue("Time ran out"));
+                        newRound.SetValue(att, this.GetValue("Win condition"));
                     }
                     else if (att == "Class")
                     {

@@ -52,6 +52,10 @@ namespace CSGODemosDatabaseCreation
                 {
                     for (int i = 0; i < round.Length; i++)
                     {
+                        if(round[i] == "")
+                        {
+                            return false;
+                        }
                         writer.Write(round[i] + ",");
                     }
                     writer.WriteLine();

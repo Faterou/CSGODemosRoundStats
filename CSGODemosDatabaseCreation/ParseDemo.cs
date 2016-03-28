@@ -41,8 +41,14 @@ namespace CSGODemosDatabaseCreation
         //Association of a player and if he has a molotov at the moment (used to get the number of molotov used)
         private Dictionary<Player, bool> m_hasMolotov;
 
+        //The first player has already been killed
+        private bool m_firstPlayerKilled;
+
         //True when the round is rolling (after freezetime)
         private bool m_roundRolling;
+
+        //True when the round is paused (something happened unusual)
+        private bool m_isPaused;
 
         //Writer
         private RoundPrinter m_printer;
@@ -64,6 +70,8 @@ namespace CSGODemosDatabaseCreation
             m_totalCashSpent = new Dictionary<Player, int>();
             m_roundRolling = false;
             m_hasMolotov = new Dictionary<Player, bool>();
+            m_firstPlayerKilled = false;
+            m_isPaused = true;
         }
 
 
@@ -95,21 +103,28 @@ namespace CSGODemosDatabaseCreation
             m_parser.LastRoundHalf += CatchLastRoundHalf;
             m_parser.RoundEnd += CatchRoundEnd;
             m_parser.TickDone += CatchTickDone;
+            m_parser.PlayerTeam += CatchPlayerTeam;
 
-            string[] attributes = {"Team name", "Enemy team name", "Map", "Team side", "Team equipment value", "Enemy team equipment value",
-                "Team number of rifles", "Enemy team number of rifles", "Team number of AWPs", "Enemy team number of AWPs", "Team number of shotguns", "Enemy team number of shotguns",
-                "Team number of SMGs", "Enemy team number of SMGs", "Team number of machine guns", "Enemy team number of machine guns",
-                "Team number of upgraded pistols", "Enemy team number of upgraded pistols", "Team number of kevlar", "Enemy team number of kevlar",
-                "Team number of helmets", "Enemy team number of helmets", "Team number of smoke grenades used", "Enemy team number of smoke grenades used",
-                "Team number of flashes used", "Enemy team number of flashes used", "Team number of molotov used", "Enemy team number of molotov used",
-                "Team number of HE used", "Enemy team number of HE used", "Team entry kill", "Round end by death", "Bomb exploded", "Bomb was defused",
-                "Time ran out", "Class" };
-
-            m_printer = new RoundPrinter(attributes, "OutputDatabaseFile.csv");
+            m_printer = new RoundPrinter(m_currentRound.GetAttributes(), "OutputDatabaseFile.csv");
 
             m_parser.ParseToEnd();
 
             return true;
+        }
+
+        private void CatchPlayerTeam(object sender, PlayerTeamEventArgs e)
+        {
+            if(m_hasMatchStarted)
+            {
+                m_totalCashSpent = new Dictionary<Player, int>();
+                m_hasMolotov = new Dictionary<Player, bool>();
+
+                foreach (Player p in ((DemoParser)sender).PlayingParticipants)
+                {
+                    m_totalCashSpent.Add(p, 0);
+                    m_hasMolotov.Add(p, false);
+                }
+            }
         }
 
         /// <summary>
@@ -120,10 +135,14 @@ namespace CSGODemosDatabaseCreation
         private void CatchMatchStarted(object sender, MatchStartedEventArgs e)
         {
             m_hasMatchStarted = true;
+            m_isPaused = false;
             m_team = new ProfessionalTeam(((DemoParser)sender).CTClanName, Team.CounterTerrorist, m_date);
             m_enemyTeam = new ProfessionalTeam(((DemoParser)sender).TClanName, Team.Terrorist, m_date);
 
-            foreach(Player p in ((DemoParser)sender).PlayingParticipants)
+            m_totalCashSpent = new Dictionary<Player, int>();
+            m_hasMolotov = new Dictionary<Player, bool>();
+
+            foreach (Player p in ((DemoParser)sender).PlayingParticipants)
             {
                 m_totalCashSpent.Add(p, 0);
                 m_hasMolotov.Add(p, false);
@@ -152,23 +171,19 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">Args</param>
         private void CatchRoundStart(object sender, RoundStartedEventArgs e)
         {
-            if(m_hasMatchStarted)
+            if(m_isPaused)
             {
-                if(m_printer.PrintRound(m_currentRound.GetValues()) && m_printer.PrintRound(m_currentRound.ReverseRound().GetValues()))
-                {
-                    m_currentRound.ClearValues();
-                }
-                else
-                {
-                    Console.WriteLine("WHOOPS PROBLEM WHEN PRINTING");
-                }
+                m_isPaused = false;
             }
 
-            if(m_sideSwitch)
+            if(m_hasMatchStarted)
             {
-                m_team.SwitchSide();
-                m_enemyTeam.SwitchSide();
-                m_sideSwitch = false;
+                if (m_sideSwitch)
+                {
+                    m_team.SwitchSide();
+                    m_enemyTeam.SwitchSide();
+                    m_sideSwitch = false;
+                }
             }
         }
 
@@ -180,8 +195,91 @@ namespace CSGODemosDatabaseCreation
         private void CatchRoundEnd(object sender, RoundEndedEventArgs e)
         {
             m_roundRolling = false;
+            m_firstPlayerKilled = false;
             foreach(Player p in m_hasMolotov.Keys.ToList()) {
                 m_hasMolotov[p] = false;
+            }
+
+            if(m_hasMatchStarted)
+            {
+                if (Regex.Match(e.Message, "CTs_Win").Success)
+                {
+                    m_currentRound.SetValue("Win condition", "Death");
+
+                    if (m_team.m_side == Team.CounterTerrorist)
+                    {
+                        m_currentRound.SetValue("Class", "Win");
+                    }
+                    else
+                    {
+                        m_currentRound.SetValue("Class", "Loss");
+                    }
+                }
+                else if (Regex.Match(e.Message, "Bomb_Defused").Success)
+                {
+                    m_currentRound.SetValue("Win condition", "Bomb defused");
+
+                    if (m_team.m_side == Team.CounterTerrorist)
+                    {
+                        m_currentRound.SetValue("Class", "Win");
+                    }
+                    else
+                    {
+                        m_currentRound.SetValue("Class", "Loss");
+                    }
+                }
+                else if (Regex.Match(e.Message, "Terrorists_Win").Success)
+                {
+                    m_currentRound.SetValue("Win condition", "Death");
+
+                    if (m_team.m_side == Team.CounterTerrorist)
+                    {
+                        m_currentRound.SetValue("Class", "Loss");
+                    }
+                    else
+                    {
+                        m_currentRound.SetValue("Class", "Win");
+                    }
+                }
+                else if(Regex.Match(e.Message, "Target_Bombed").Success)
+                {
+                    m_currentRound.SetValue("Win condition", "Bomb exploded");
+
+                    if (m_team.m_side == Team.CounterTerrorist)
+                    {
+                        m_currentRound.SetValue("Class", "Loss");
+                    }
+                    else
+                    {
+                        m_currentRound.SetValue("Class", "Win");
+                    }
+                }
+                else
+                {
+                    m_currentRound.SetValue("Win condition", "Time ran out");
+
+                    if (m_team.m_side == Team.CounterTerrorist)
+                    {
+                        m_currentRound.SetValue("Class", "Win");
+                    }
+                    else
+                    {
+                        m_currentRound.SetValue("Class", "Loss");
+                    }
+                }
+
+                if (m_hasMatchStarted)
+                {
+                    if (m_printer.PrintRound(m_currentRound.GetValues()) && m_printer.PrintRound(m_currentRound.ReverseRound().GetValues()))
+                    {
+                        m_currentRound.ClearValues();
+                    }
+                    else
+                    {
+                        Console.WriteLine("WHOOPS PROBLEM WHEN PRINTING");
+                        m_currentRound.ClearValues();
+                    }
+                }
             }
         }
 
@@ -193,7 +291,17 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">Args</param>
         private void CatchPlayerKilled(object sender, PlayerKilledEventArgs e)
         {
-            return;
+            if(m_hasMatchStarted)
+            {
+                if(!m_firstPlayerKilled)
+                {
+                    if(e.Killer.Team == m_team.m_side)
+                    {
+                        m_currentRound.SetValue("Team entry kill", "Yes");
+                        m_firstPlayerKilled = true;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -204,26 +312,29 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">args</param>
         private void CatchSmokeNadeStarted(object sender, SmokeEventArgs e)
         {
-            if(e.ThrownBy.Team == m_team.m_side)
+            if(m_hasMatchStarted)
             {
-                try
+                if (e.ThrownBy.Team == m_team.m_side)
                 {
-                    m_currentRound.SetValue("Team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Team number of smoke grenades used")) + 1).ToString());
+                    try
+                    {
+                        m_currentRound.SetValue("Team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Team number of smoke grenades used")) + 1).ToString());
+                    }
+                    catch(FormatException)
+                    {
+
+                    }
                 }
-                catch(FormatException)
+                else
                 {
-                    m_currentRound.SetValue("Team number of smoke grenades used", "0");
-                }
-            }
-            else
-            {
-                try
-                {
-                    m_currentRound.SetValue("Enemy team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of smoke grenades used")) + 1).ToString());
-                }
-                catch(FormatException)
-                {
-                    m_currentRound.SetValue("Enemy team number of smoke grenades used", "0");
+                    try
+                    {
+                        m_currentRound.SetValue("Enemy team number of smoke grenades used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of smoke grenades used")) + 1).ToString());
+                    }
+                    catch (FormatException)
+                    {
+
+                    }
                 }
             }
         }
@@ -236,26 +347,29 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">args</param>
         private void CatchFlashNadeExploded(object sender, FlashEventArgs e)
         {
-            if (e.ThrownBy.Team == m_team.m_side)
+            if (m_hasMatchStarted)
             {
-                try
+                if (e.ThrownBy.Team == m_team.m_side)
                 {
-                    m_currentRound.SetValue("Team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Team number of flashes used")) + 1).ToString());
+                    try
+                    {
+                        m_currentRound.SetValue("Team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Team number of flashes used")) + 1).ToString());
+                    }
+                    catch(FormatException)
+                    {
+
+                    }
                 }
-                catch (FormatException)
+                else
                 {
-                    m_currentRound.SetValue("Team number of flashes used", "0");
-                }
-            }
-            else
-            {
-                try
-                {
-                    m_currentRound.SetValue("Enemy team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of flashes used")) + 1).ToString());
-                }
-                catch (FormatException)
-                {
-                    m_currentRound.SetValue("Enemy team number of flashes used", "0");
+                    try
+                    {
+                        m_currentRound.SetValue("Enemy team number of flashes used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of flashes used")) + 1).ToString());
+                    }
+                    catch(FormatException)
+                    {
+
+                    }
                 }
             }
         }
@@ -268,26 +382,29 @@ namespace CSGODemosDatabaseCreation
         /// <param name="e">args</param>
         private void CatchExplosiveNadeExploded(object sender, GrenadeEventArgs e)
         {
-            if (e.ThrownBy.Team == m_team.m_side)
+            if(m_hasMatchStarted)
             {
-                try
+                if (e.ThrownBy.Team == m_team.m_side)
                 {
-                    m_currentRound.SetValue("Team number of HE used", (Int32.Parse(m_currentRound.GetValue("Team number of HE used")) + 1).ToString());
+                    try
+                    {
+                        m_currentRound.SetValue("Team number of HE used", (Int32.Parse(m_currentRound.GetValue("Team number of HE used")) + 1).ToString());
+                    }
+                    catch (FormatException)
+                    {
+
+                    }
                 }
-                catch (FormatException)
+                else
                 {
-                    m_currentRound.SetValue("Team number of HE used", "0");
-                }
-            }
-            else
-            {
-                try
-                {
-                    m_currentRound.SetValue("Enemy team number of HE used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of HE used")) + 1).ToString());
-                }
-                catch (FormatException)
-                {
-                    m_currentRound.SetValue("Enemy team number of HE used", "0");
+                    try
+                    {
+                        m_currentRound.SetValue("Enemy team number of HE used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of HE used")) + 1).ToString());
+                    }
+                    catch (FormatException)
+                    {
+
+                    }
                 }
             }
         }
@@ -299,26 +416,29 @@ namespace CSGODemosDatabaseCreation
         /// <param name="p">the player who threw the molotov</param>
         private void CatchFireNadeStarted(Player p)
         {
-            if (p.Team == m_team.m_side)
+            if(m_hasMatchStarted)
             {
-                try
+                if (p.Team == m_team.m_side)
                 {
-                    m_currentRound.SetValue("Team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Team number of molotov used")) + 1).ToString());
+                    try
+                    {
+                        m_currentRound.SetValue("Team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Team number of molotov used")) + 1).ToString());
+                    }
+                    catch (FormatException)
+                    {
+
+                    }
                 }
-                catch (FormatException)
+                else
                 {
-                    m_currentRound.SetValue("Team number of molotov used", "0");
-                }
-            }
-            else
-            {
-                try
-                {
-                    m_currentRound.SetValue("Enemy team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of molotov used")) + 1).ToString());
-                }
-                catch (FormatException)
-                {
-                    m_currentRound.SetValue("Enemy team number of molotov used", "0");
+                    try
+                    {
+                        m_currentRound.SetValue("Enemy team number of molotov used", (Int32.Parse(m_currentRound.GetValue("Enemy team number of molotov used")) + 1).ToString());
+                    }
+                    catch (FormatException)
+                    {
+
+                    }
                 }
             }
         }
@@ -339,22 +459,29 @@ namespace CSGODemosDatabaseCreation
             {
                 foreach(Player p in ((DemoParser)sender).PlayingParticipants)
                 {
-                    if(p.AdditionaInformations.TotalCashSpent > m_totalCashSpent[p])
+                    try
                     {
-                        RecordEquipment();
-                    }
-
-                    if((p.Weapons.Where(weapon => weapon.Weapon == EquipmentElement.Molotov || weapon.Weapon == EquipmentElement.Incendiary)).Count() > 0)
-                    {
-                        m_hasMolotov[p] = true;
-                    }
-                    else if(m_hasMolotov[p])
-                    {
-                        if(p.IsAlive)
+                        if (p.AdditionaInformations.TotalCashSpent > m_totalCashSpent[p])
                         {
-                            CatchFireNadeStarted(p);
+                            RecordEquipment();
                         }
-                        m_hasMolotov[p] = false;
+
+                        if ((p.Weapons.Where(weapon => weapon.Weapon == EquipmentElement.Molotov || weapon.Weapon == EquipmentElement.Incendiary)).Count() > 0)
+                        {
+                            m_hasMolotov[p] = true;
+                        }
+                        else if (m_hasMolotov[p])
+                        {
+                            if (p.IsAlive)
+                            {
+                                CatchFireNadeStarted(p);
+                            }
+                            m_hasMolotov[p] = false;
+                        }
+                    }
+                    catch(KeyNotFoundException)
+                    {
+                        pause();
                     }
                 }
             }
@@ -368,7 +495,12 @@ namespace CSGODemosDatabaseCreation
 
         }
 
-        
+        private void pause()
+        {
+            m_currentRound.ClearValues();
+            m_roundRolling = false;
+            m_isPaused = true;
+        }
 
 
         /// <summary>
@@ -516,6 +648,15 @@ namespace CSGODemosDatabaseCreation
             m_currentRound.SetValue("Enemy team number of kevlar", enemyTeamNumberOfKevlar.ToString());
             m_currentRound.SetValue("Team number of helmets", teamNumberOfHelmets.ToString());
             m_currentRound.SetValue("Enemy team number of helmets", enemyTeamNumberOfHelmets.ToString());
+            m_currentRound.SetValue("Team number of smoke grenades used", "0");
+            m_currentRound.SetValue("Enemy team number of smoke grenades used", "0");
+            m_currentRound.SetValue("Team number of flashes used", "0");
+            m_currentRound.SetValue("Enemy team number of flashes used", "0");
+            m_currentRound.SetValue("Team number of molotov used", "0");
+            m_currentRound.SetValue("Enemy team number of molotov used", "0");
+            m_currentRound.SetValue("Team number of HE used", "0");
+            m_currentRound.SetValue("Enemy team number of HE used", "0");
+            m_currentRound.SetValue("Team entry kill", "No");
         }
 
         /// <summary>
@@ -525,18 +666,22 @@ namespace CSGODemosDatabaseCreation
         /// <returns>Returns the date of the event</returns>
         private DateTime GetDateOfEvent(string filename)
         {
+            //Works
             if(Regex.Match(filename,"IEMKatowice2016").Success)
             {
                 return new DateTime(2016, 3, 2);
             }
+            //Doesn't work
             else if(Regex.Match(filename, "GEC2016Finals").Success)
             {
                 return new DateTime(2016, 2, 4);
             }
+            //Works
             else if (Regex.Match(filename, "IEMSanJose2015").Success)
             {
                 return new DateTime(2015, 11, 21);
             }
+            //Works
             else if (Regex.Match(filename, "MLGColumbus2016MainQualifier").Success)
             {
                 return new DateTime(2016, 2, 26);
