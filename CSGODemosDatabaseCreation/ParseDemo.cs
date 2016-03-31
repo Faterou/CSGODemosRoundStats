@@ -32,6 +32,9 @@ namespace CSGODemosDatabaseCreation
         //The current round stats
         private Round m_currentRound;
 
+        //The current rounds of the match
+        private Match m_match;
+
         //True if the sides have to be switched, false otherwise
         private bool m_sideSwitch;
 
@@ -49,6 +52,9 @@ namespace CSGODemosDatabaseCreation
 
         //True when the round is paused (something happened unusual)
         private bool m_isPaused;
+
+        //Number of rounds played
+        private int m_roundsPlayed;
 
         //Writer
         private RoundPrinter m_printer;
@@ -72,6 +78,8 @@ namespace CSGODemosDatabaseCreation
             m_hasMolotov = new Dictionary<Player, bool>();
             m_firstPlayerKilled = false;
             m_isPaused = true;
+            m_match = new Match();
+            m_roundsPlayed = 0;
         }
 
 
@@ -104,17 +112,24 @@ namespace CSGODemosDatabaseCreation
             m_parser.RoundEnd += CatchRoundEnd;
             m_parser.TickDone += CatchTickDone;
             m_parser.PlayerTeam += CatchPlayerTeam;
+            m_parser.RoundOfficiallyEnd += CatchRoundOfficiallyEnd;
 
             m_printer = new RoundPrinter(m_currentRound.GetAttributes(), "OutputDatabaseFile.csv");
 
             m_parser.ParseToEnd();
+
+            foreach(Round r in m_match.GetAllRounds())
+            {
+                m_printer.PrintRound(r.GetValues());
+                m_printer.PrintRound(r.ReverseRound().GetValues());
+            }
 
             return true;
         }
 
         private void CatchPlayerTeam(object sender, PlayerTeamEventArgs e)
         {
-            if(m_hasMatchStarted)
+            if(m_hasMatchStarted && e.NewTeam != Team.Spectate)
             {
                 m_totalCashSpent = new Dictionary<Player, int>();
                 m_hasMolotov = new Dictionary<Player, bool>();
@@ -159,6 +174,21 @@ namespace CSGODemosDatabaseCreation
         {
             if (m_hasMatchStarted)
             {
+                m_totalCashSpent = new Dictionary<Player, int>();
+                m_hasMolotov = new Dictionary<Player, bool>();
+
+                foreach (Player p in ((DemoParser)sender).PlayingParticipants)
+                {
+                    m_totalCashSpent.Add(p, 0);
+                    m_hasMolotov.Add(p, false);
+                }
+
+                if (m_roundsPlayed != m_parser.CTScore + m_parser.TScore)
+                {
+                    m_match.RemoveLastRound();
+                    m_roundsPlayed = m_parser.CTScore + m_parser.TScore;
+                }
+
                 RecordEquipment();
                 m_roundRolling = true;
             }
@@ -268,19 +298,14 @@ namespace CSGODemosDatabaseCreation
                     }
                 }
 
-                if (m_hasMatchStarted)
-                {
-                    if (m_printer.PrintRound(m_currentRound.GetValues()) && m_printer.PrintRound(m_currentRound.ReverseRound().GetValues()))
-                    {
-                        m_currentRound.ClearValues();
-                    }
-                    else
-                    {
-                        Console.WriteLine("WHOOPS PROBLEM WHEN PRINTING");
-                        m_currentRound.ClearValues();
-                    }
-                }
+                m_match.AddRound(m_currentRound);
+                m_currentRound = new Round();
             }
+        }
+
+        private void CatchRoundOfficiallyEnd(object sender, RoundOfficiallyEndedEventArgs e)
+        {
+            m_roundsPlayed++;
         }
 
         /// <summary>
@@ -497,7 +522,7 @@ namespace CSGODemosDatabaseCreation
 
         private void pause()
         {
-            m_currentRound.ClearValues();
+            m_currentRound = new Round();
             m_roundRolling = false;
             m_isPaused = true;
         }
@@ -686,42 +711,52 @@ namespace CSGODemosDatabaseCreation
             {
                 return new DateTime(2016, 2, 26);
             }
+            //Doesn't work, doesn't seem to be any catchmatchstarted event
             else if (Regex.Match(filename, "SLi14Finals").Success)
             {
                 return new DateTime(2016, 1, 14);
             }
+            //Works
             else if (Regex.Match(filename, "ESLESEA2Finals").Success)
             {
                 return new DateTime(2015, 12, 13);
             }
+            //Works
             else if (Regex.Match(filename, "ESLBarcelonaCSGOInvitational").Success)
             {
                 return new DateTime(2016, 19, 2);
             }
+            //Works
             else if (Regex.Match(filename, "DreamHackMastersMalmoNAClosedQualifier").Success)
             {
                 return new DateTime(2016, 2, 21);
             }
+            //Doesn't work, no matchstarted event
             else if (Regex.Match(filename, "DHLondon2015").Success)
             {
                 return new DateTime(2015, 9, 20);
             }
+            //Doesn't work, no match started event
             else if (Regex.Match(filename, "DHLeipzig2016").Success)
             {
                 return new DateTime(2016, 1, 22);
             }
+            //Works
             else if (Regex.Match(filename, "DHCluj2015").Success)
             {
                 return new DateTime(2015, 10, 28);
             }
+            //Doesn't work, no match started event
             else if (Regex.Match(filename, "DHCluj2015LANQualifier").Success)
             {
                 return new DateTime(2015, 9, 22);
             }
+            //Works
             else if (Regex.Match(filename, "ESLESEADubai").Success)
             {
                 return new DateTime(2015, 9, 10);
             }
+            //Works
             else if (Regex.Match(filename, "ESLOneCologne2015").Success)
             {
                 return new DateTime(2015, 8, 20);
