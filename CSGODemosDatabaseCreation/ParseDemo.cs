@@ -638,7 +638,8 @@ namespace CSGODemosDatabaseCreation
                     {
                         teamNumberOfKevlar++;
                     }
-                    else if (p.HasHelmet)
+
+                    if (p.HasHelmet)
                     {
                         teamNumberOfHelmets++;
                     }
@@ -680,7 +681,8 @@ namespace CSGODemosDatabaseCreation
                     {
                         enemyTeamNumberOfKevlar++;
                     }
-                    else if (p.HasHelmet)
+
+                    if (p.HasHelmet)
                     {
                         enemyTeamNumberOfHelmets++;
                     }

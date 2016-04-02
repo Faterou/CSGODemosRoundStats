@@ -154,6 +154,7 @@ namespace CSGODemosDatabaseCreation
             {
                 name = "G2 Esports";
             }
+
             return name;
         }
     }
