@@ -71,7 +71,7 @@ namespace CSGODemosDatabaseCreation
             m_enemyTeam = null;
             m_map = "";
             m_printer = null;
-            m_currentRound = new Round();
+            m_currentRound = null;
             m_sideSwitch = false;
             m_totalCashSpent = new Dictionary<Player, int>();
             m_roundRolling = false;
@@ -89,7 +89,7 @@ namespace CSGODemosDatabaseCreation
         /// <param name="outputDatabaseFilename">Filename of the output file</param>
         /// <param name="demoFilename">Filename of the demo file</param>
         /// <returns>Returns true if the demo was parsed correctly.</returns>
-        public bool ParseADemo(string outputDatabaseFilename, string demoFilename)
+        public bool ParseADemo(string outputDatabaseFilename, string demoFilename, string[] attributes)
         {
             m_date = GetDateOfEvent(demoFilename);
 
@@ -114,7 +114,9 @@ namespace CSGODemosDatabaseCreation
             m_parser.PlayerTeam += CatchPlayerTeam;
             m_parser.RoundOfficiallyEnd += CatchRoundOfficiallyEnd;
 
-            m_printer = new RoundPrinter(m_currentRound.GetAttributes(), "OutputDatabaseFile.csv");
+            m_currentRound = new Round(attributes);
+
+            m_printer = new RoundPrinter(m_currentRound.GetAttributes(), outputDatabaseFilename);
 
             m_parser.ParseToEnd();
 
@@ -124,9 +126,16 @@ namespace CSGODemosDatabaseCreation
                 m_printer.PrintRound(r.ReverseRound().GetValues());
             }
 
+            resetParser();
+
             return true;
         }
 
+        /// <summary>
+        /// Catches when a someone chooses a team
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">args</param>
         private void CatchPlayerTeam(object sender, PlayerTeamEventArgs e)
         {
             if(m_hasMatchStarted && e.NewTeam != Team.Spectate)
@@ -303,6 +312,11 @@ namespace CSGODemosDatabaseCreation
             }
         }
 
+        /// <summary>
+        /// Catches when a round offically ends (just before the next round starts)
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">args</param>
         private void CatchRoundOfficiallyEnd(object sender, RoundOfficiallyEndedEventArgs e)
         {
             m_roundsPlayed++;
@@ -320,11 +334,11 @@ namespace CSGODemosDatabaseCreation
             {
                 if(!m_firstPlayerKilled)
                 {
-                    if(e.Killer.Team == m_team.m_side)
+                    if((e.Killer != null && e.Killer.Team == m_team.m_side) || (e.Victim.Team != m_team.m_side))
                     {
                         m_currentRound.SetValue("Team entry kill", "Yes");
-                        m_firstPlayerKilled = true;
                     }
+                    m_firstPlayerKilled = true;
                 }
             }
         }
@@ -478,6 +492,11 @@ namespace CSGODemosDatabaseCreation
             m_sideSwitch = true;
         }
 
+        /// <summary>
+        /// Catches the end of a tick
+        /// </summary>
+        /// <param name="sender">The parser</param>
+        /// <param name="e">args</param>
         private void CatchTickDone(object sender, TickDoneEventArgs e)
         {
             if(m_roundRolling)
@@ -517,9 +536,26 @@ namespace CSGODemosDatabaseCreation
         /// </summary>
         private void resetParser()
         {
-
+            m_hasMatchStarted = false;
+            m_date = new DateTime();
+            m_team = null;
+            m_enemyTeam = null;
+            m_map = "";
+            m_printer = null;
+            m_currentRound = null;
+            m_sideSwitch = false;
+            m_totalCashSpent = new Dictionary<Player, int>();
+            m_roundRolling = false;
+            m_hasMolotov = new Dictionary<Player, bool>();
+            m_firstPlayerKilled = false;
+            m_isPaused = true;
+            m_match = new Match();
+            m_roundsPlayed = 0;
         }
 
+        /// <summary>
+        /// Puts the parser on "pause"
+        /// </summary>
         private void pause()
         {
             m_currentRound = new Round();
@@ -691,7 +727,7 @@ namespace CSGODemosDatabaseCreation
         /// <returns>Returns the date of the event</returns>
         private DateTime GetDateOfEvent(string filename)
         {
-            //Works
+            //Works1
             if(Regex.Match(filename,"IEMKatowice2016").Success)
             {
                 return new DateTime(2016, 3, 2);
@@ -701,12 +737,12 @@ namespace CSGODemosDatabaseCreation
             {
                 return new DateTime(2016, 2, 4);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "IEMSanJose2015").Success)
             {
                 return new DateTime(2015, 11, 21);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "MLGColumbus2016MainQualifier").Success)
             {
                 return new DateTime(2016, 2, 26);
@@ -716,17 +752,17 @@ namespace CSGODemosDatabaseCreation
             {
                 return new DateTime(2016, 1, 14);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "ESLESEA2Finals").Success)
             {
                 return new DateTime(2015, 12, 13);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "ESLBarcelonaCSGOInvitational").Success)
             {
                 return new DateTime(2016, 19, 2);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "DreamHackMastersMalmoNAClosedQualifier").Success)
             {
                 return new DateTime(2016, 2, 21);
@@ -741,7 +777,7 @@ namespace CSGODemosDatabaseCreation
             {
                 return new DateTime(2016, 1, 22);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "DHCluj2015").Success)
             {
                 return new DateTime(2015, 10, 28);
@@ -751,12 +787,12 @@ namespace CSGODemosDatabaseCreation
             {
                 return new DateTime(2015, 9, 22);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "ESLESEADubai").Success)
             {
                 return new DateTime(2015, 9, 10);
             }
-            //Works
+            //Works1
             else if (Regex.Match(filename, "ESLOneCologne2015").Success)
             {
                 return new DateTime(2015, 8, 20);

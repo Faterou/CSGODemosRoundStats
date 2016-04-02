@@ -28,15 +28,6 @@ namespace CSGODemosDatabaseCreation
         {
             m_attributes = attributes;
             m_outputDatabaseFilename = outputDatabaseFilename;
-
-            using (StreamWriter writer = new StreamWriter(outputDatabaseFilename, false, Encoding.UTF8))
-            {
-                for (int i = 0; i < m_attributes.Length; i++)
-                {
-                    writer.Write(m_attributes[i] + ",");
-                }
-                writer.WriteLine();
-            }
         }
 
         /// <summary>
@@ -48,9 +39,10 @@ namespace CSGODemosDatabaseCreation
         {
             if(round.Length == m_attributes.Length)
             {
-                using(StreamWriter writer = new StreamWriter(m_outputDatabaseFilename, true, Encoding.UTF8))
+                System.Text.UTF8Encoding utf8NoBom = new System.Text.UTF8Encoding(false);
+                using(StreamWriter writer = new StreamWriter(m_outputDatabaseFilename, true, utf8NoBom))
                 {
-                    for (int i = 0; i < round.Length; i++)
+                    for (int i = 0; i < round.Length - 1; i++)
                     {
                         if(round[i] == "")
                         {
@@ -58,6 +50,7 @@ namespace CSGODemosDatabaseCreation
                         }
                         writer.Write(round[i] + ",");
                     }
+                    writer.Write(round[round.Length - 1]);
                     writer.WriteLine();
                 }
                 return true;

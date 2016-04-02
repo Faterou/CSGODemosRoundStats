@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Logger.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="ParseDemo.cs" />
     <Compile Include="ParseDemos.cs" />
