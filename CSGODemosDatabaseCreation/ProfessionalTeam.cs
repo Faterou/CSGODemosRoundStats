@@ -119,7 +119,7 @@ namespace CSGODemosDatabaseCreation
             {
                 name = "Echo Fox";
             }
-            else if (name.Equals("Faze", StringComparison.CurrentCultureIgnoreCase))
+            else if (name.Equals("Faze", StringComparison.CurrentCultureIgnoreCase) || name.Equals("FaZe Clan", StringComparison.CurrentCultureIgnoreCase))
             {
                 name = "Faze Clan";
             }

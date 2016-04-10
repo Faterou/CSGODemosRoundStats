@@ -56,6 +56,9 @@ namespace CSGODemosDatabaseCreation
         //Number of rounds played
         private int m_roundsPlayed;
 
+        //Attributes
+        private string[] m_attributes;
+
         //Writer
         private RoundPrinter m_printer;
 
@@ -93,6 +96,8 @@ namespace CSGODemosDatabaseCreation
         {
             m_date = GetDateOfEvent(demoFilename);
 
+            m_attributes = attributes;
+
             m_parser = new DemoParser(new FileStream(demoFilename, FileMode.Open));
 
             m_parser.ParseHeader();
@@ -114,7 +119,7 @@ namespace CSGODemosDatabaseCreation
             m_parser.PlayerTeam += CatchPlayerTeam;
             m_parser.RoundOfficiallyEnd += CatchRoundOfficiallyEnd;
 
-            m_currentRound = new Round(attributes);
+            m_currentRound = new Round(m_attributes);
 
             m_printer = new RoundPrinter(m_currentRound.GetAttributes(), outputDatabaseFilename);
 
@@ -308,7 +313,7 @@ namespace CSGODemosDatabaseCreation
                 }
 
                 m_match.AddRound(m_currentRound);
-                m_currentRound = new Round();
+                m_currentRound = new Round(m_attributes);
             }
         }
 
@@ -558,7 +563,7 @@ namespace CSGODemosDatabaseCreation
         /// </summary>
         private void pause()
         {
-            m_currentRound = new Round();
+            m_currentRound = new Round(m_attributes);
             m_roundRolling = false;
             m_isPaused = true;
         }
@@ -762,7 +767,7 @@ namespace CSGODemosDatabaseCreation
             //Works1
             else if (Regex.Match(filename, "ESLBarcelonaCSGOInvitational").Success)
             {
-                return new DateTime(2016, 19, 2);
+                return new DateTime(2016, 2, 19);
             }
             //Works1
             else if (Regex.Match(filename, "DreamHackMastersMalmoNAClosedQualifier").Success)
@@ -798,6 +803,11 @@ namespace CSGODemosDatabaseCreation
             else if (Regex.Match(filename, "ESLOneCologne2015").Success)
             {
                 return new DateTime(2015, 8, 20);
+            }
+            //Works1
+            else if(Regex.Match(filename, "MLGColumbus2016").Success)
+            {
+                return new DateTime(2016, 4, 1);
             }
             return new DateTime();
         }

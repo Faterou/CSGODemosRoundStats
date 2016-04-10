@@ -51,7 +51,7 @@ namespace CSGODemosDatabaseCreation
                 "Team number of upgraded pistols", "Enemy team number of upgraded pistols", "Team number of kevlar", "Enemy team number of kevlar",
                 "Team number of helmets", "Enemy team number of helmets", "Team number of smoke grenades used", "Enemy team number of smoke grenades used",
                 "Team number of flashes used", "Enemy team number of flashes used", "Team number of molotov used", "Enemy team number of molotov used",
-                "Team number of HE used", "Enemy team number of HE used", "Team entry kill", "Win condition",  "Class" };
+                "Team number of HE used", "Enemy team number of HE used", "Team entry kill",  "Class" };
 
             System.Text.UTF8Encoding utf8NoBom = new System.Text.UTF8Encoding(false);
             using (StreamWriter writer = new StreamWriter(outputDatabaseFilename, false, utf8NoBom))
@@ -76,6 +76,7 @@ namespace CSGODemosDatabaseCreation
                     catch(Exception e)
                     {
                         Logger.GetInstance().Log(String.Format("The file {0} wasn't parsed properly.", demoFilename));
+                        Logger.GetInstance().Log(e.Message);
                     }
                 }
             }

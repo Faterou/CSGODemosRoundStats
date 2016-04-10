@@ -34,7 +34,25 @@ This project is using [DemoInfo](https://github.com/EHVAG/demoinfo) to build a d
 - Team's number of HE Grenades used
 - Enemy team's number of HE Grenades used
 - Entry kill?
-- Win condition (Time ran out, death, bomb defused, bomb exploded)
 - Round win or loss
 
+## Events that are tested and working
 
+- IEM Katowice 2016
+- IEM San Jose 2015
+- MLG Columbus 2016 Main Qualifier
+- ESL ESEA 2 Finals
+- ESL Barcelona CSGO Invitational
+- Dreamhack Masters Malmo NA CLosed Qualifier
+- Dreamhack Cluj-Napoca 2015
+- ESL ESEA Dubai
+- ESL One Cologne 2015
+- MLG Columbus 2016
+
+## Events that are tested and not working
+
+- GEC 2016 Finals
+- SLi14 Finals
+- Dreamhack London 2015
+- Dreamhack Leipzig 2016
+- Dreamhack Cluj-Napoca 2015 Lan Qualifier

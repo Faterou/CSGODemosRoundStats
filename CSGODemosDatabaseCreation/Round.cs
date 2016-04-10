@@ -11,7 +11,7 @@ namespace CSGODemosDatabaseCreation
         //Dictionary of key: name of attribute and value: Value.
         private Dictionary<string, RoundAttribute> m_attributes;
 
-        private int m_numberOfEnabledAttributes;
+        private string[] m_enabledAttributes;
 
         //List of possible attributes
         string[] m_listOfAttributeNames = { "Team name", "Enemy team name", "Map", "Team side", "Team equipment value", "Enemy team equipment value",
@@ -34,7 +34,7 @@ namespace CSGODemosDatabaseCreation
                 m_attributes.Add(m_listOfAttributeNames[i], new RoundAttribute(true));
             }
 
-            m_numberOfEnabledAttributes = m_attributes.Count;
+            m_enabledAttributes = m_listOfAttributeNames;
         }
 
         /// <summary>
@@ -43,7 +43,6 @@ namespace CSGODemosDatabaseCreation
         /// <param name="attributes">List of attributes you want to enable</param>
         public Round(string[] attributes)
         {
-            m_numberOfEnabledAttributes = 0;
             m_attributes = new Dictionary<string, RoundAttribute>();
 
             for(int i = 0; i < m_listOfAttributeNames.Length; i++)
@@ -56,9 +55,10 @@ namespace CSGODemosDatabaseCreation
                 if(m_attributes.ContainsKey(attributes[i]))
                 {
                     m_attributes[attributes[i]].m_isEnabled = true;
-                    m_numberOfEnabledAttributes++;
                 }
             }
+
+            m_enabledAttributes = attributes;
         }
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace CSGODemosDatabaseCreation
         /// <returns>Returns the array of strings containing all the attributes that are enabled</returns>
         public string[] GetAttributes()
         {
-            string[] attributes = new string[m_numberOfEnabledAttributes];
+            string[] attributes = new string[m_enabledAttributes.Length];
 
             int counter = 0;
 
@@ -106,7 +106,7 @@ namespace CSGODemosDatabaseCreation
         /// <returns>Returns an array of strings containing the values</returns>
         public string[] GetValues()
         {
-            string[] values = new string[m_numberOfEnabledAttributes];
+            string[] values = new string[m_enabledAttributes.Length];
 
             int counter = 0;
 
@@ -168,7 +168,7 @@ namespace CSGODemosDatabaseCreation
         /// <returns></returns>
         public Round ReverseRound()
         {
-            Round newRound = new Round();
+            Round newRound = new Round(m_enabledAttributes);
 
             foreach (string att in this.m_attributes.Keys)
             {
@@ -358,7 +358,8 @@ namespace CSGODemosDatabaseCreation
                 ra.Value.m_isEnabled = false;
                 ra.Value.m_value = null;
             }
-            m_numberOfEnabledAttributes = 0;
+
+            m_enabledAttributes = new string[0];
         }
 
         private class RoundAttribute
